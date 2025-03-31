@@ -2,11 +2,11 @@ package gpio
 
 import (
 	"fmt"
+	"log"
 	"os"
 	"syscall"
 	"unsafe"
 
-	log "github.com/darkb0ts/go-gpio/internal/logger"
 	"golang.org/x/sys/unix"
 )
 
@@ -30,8 +30,7 @@ const (
 )
 
 var gpioMem []uint32
-var logger  bool = false
-var logInstance *log.Logger
+var logger bool = false
 
 func Setup() error {
 	mem, err := os.OpenFile("/dev/gpiomem", os.O_RDWR|os.O_SYNC, 0)
@@ -44,7 +43,9 @@ func Setup() error {
 	memMap, err := syscall.Mmap(int(mem.Fd()), int64(gpioBase), BLOCK_SIZE, syscall.PROT_READ|syscall.PROT_WRITE, syscall.MAP_SHARED)
 	if err != nil {
 			return log.ERROR("failed to mmap: %v", err)
-	}
+			log.Printf("ERROR: failed to mmap: %v", err)
+					return err
+			}
 
 	// Ensure that the mmap is unmapped when the function returns.
 	defer syscall.Munmap(memMap)
@@ -69,6 +70,12 @@ func SetupGPIOArray(gpios []int, direction int) {
 	}
 }
 
+func OutputGPIOArray(gpios []int, value int) {
+	for _, gpio := range gpios {
+		OutputGPIO(gpio, value)
+	}
+}
+
 func OutputGPIO(gpio, value int) {
 	offset := CLR_OFFSET
 	action := "LOW"
@@ -79,7 +86,7 @@ func OutputGPIO(gpio, value int) {
 	}
 
 	if logger {
-			logInstance.Info("Setting GPIO %d to %s", gpio, action)
+			log.Printf("INFO: Setting GPIO %d to %s", gpio, action)
 	}
 
 	gpioMem[offset+gpio/32] = 1 << (gpio % 32)
@@ -90,6 +97,14 @@ func InputGPIO(gpio int) int {
 		return HIGH
 	}
 	return LOW
+}
+
+func InputGPIOArray(gpios []int) []int {
+	inputs := make([]int, len(gpios))
+	for i, gpio := range gpios {
+		inputs[i] = InputGPIO(gpio)
+	}
+	return inputs
 }
 
 func SetRisingEvent(gpio, enable int) {
