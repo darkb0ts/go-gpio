@@ -106,5 +106,3 @@ Contributions are welcome! Please fork the repository and submit a pull request 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
 
 ---
-
-This README provides a clear overview, installation instructions, usage example, and detailed API documentation. Let me know if you'd like to tweak anything further!
